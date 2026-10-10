@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a111c">
+<title>KiosGame – Top up game cepat dan hemat</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,800;1,800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* =========================================================
+   1. TOKEN WARNA, FONT, UKURAN
+   Ubah nilai di sini untuk mengganti tema seluruh website.
+   ========================================================= */
+:root{
+  --bg:#0a111c;
+  --panel:#111a2a;
+  --panel-2:#17233a;
+  --line:#22304a;
+  --lime:#a6ff3d;
+  --lime-ink:#0c1a00;
+  --hot:#ff6b1a;
+  --text:#e9eff8;
+  --muted:#8e9db5;
+  --danger:#ff7a7a;
+
+  --display:'Barlow Condensed','Arial Narrow',Impact,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+
+/* =========================================================
+   2. RESET DAN DASAR
+   ========================================================= */
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--body);
+  line-height:1.5;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body:has(dialog[open]){overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.wrap{width:min(1240px, 100% - 40px);margin-inline:auto}
+.muted{color:var(--muted)}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* garis diagonal hijau di pojok kanan atas */
+body::before{
+  content:"";position:fixed;top:0;right:0;width:600px;height:380px;pointer-events:none;z-index:-1;
+  background:linear-gradient(135deg,
+    transparent 40%, rgba(166,255,61,.14) 40%, rgba(166,255,61,.14) 55%,
+    transparent 55%, transparent 61%, rgba(166,255,61,.08) 61%, rgba(166,255,61,.08) 72%, transparent 72%);
+}
+
+/* =========================================================
+   3. HEADER DAN NAVIGASI
+   ========================================================= */
+.site-head{position:sticky;top:0;z-index:50;padding-top:14px;background:linear-gradient(var(--bg) 75%, transparent)}
+.head-card{
+  background:var(--panel);border:1px solid var(--line);border-radius:22px;
+  padding:14px 18px 8px;display:grid;gap:10px;
+}
+.head-row{display:flex;align-items:center;gap:22px}
+.logo{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--display);font-weight:800;font-style:italic;font-size:32px;line-height:1;letter-spacing:.02em;
+}
+.logo svg{width:38px;height:38px}
+.logo small{display:block;font-size:11px;font-style:normal;font-weight:600;letter-spacing:.14em;color:var(--lime);margin-top:3px}
+.search{
+  flex:1;display:flex;align-items:center;gap:10px;height:46px;padding:0 18px;
+  background:var(--bg);border:1px solid transparent;border-radius:999px;color:var(--muted);
+}
+.search:focus-within{border-color:var(--lime)}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit}
+.search input::placeholder{color:var(--muted)}
+
+.nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.nav-links,.auth{display:flex;gap:4px}
+.nav-links{overflow-x:auto;scrollbar-width:none;min-width:0}
+.nl{
+  display:flex;align-items:center;gap:8px;padding:10px 14px;white-space:nowrap;
+  font-weight:600;font-size:16px;color:var(--text);border-radius:10px;
+}
+.nl:hover{color:var(--lime)}
+.nl.active{color:var(--lime);border-radius:0;box-shadow:inset 0 -3px 0 var(--lime)}
+.auth .nl{color:var(--lime);font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:.04em}
+
+/* =========================================================
+   4. HERO / CAROUSEL (efek coverflow)
+   ========================================================= */
+.stage{
+  --w:58%;--step:68%;
+  position:relative;height:clamp(190px,32vw,400px);margin-top:30px;overflow:hidden;border-radius:26px;
+}
+.slide{
+  position:absolute;top:0;left:50%;width:var(--w);margin-left:calc(var(--w) / -2);height:100%;
+  border-radius:26px;overflow:hidden;cursor:pointer;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  transform:translateX(calc(var(--d) * var(--step))) scale(calc(1 - var(--abs) * .17));
+  opacity:calc(1 - var(--abs) * .6);
+  transition:transform .65s cubic-bezier(.2,.8,.2,1), opacity .65s;
+}
+.slide.is-hidden{opacity:0;pointer-events:none}
+.slide::before{
+  content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 14px, transparent 14px 44px);
+}
+.slide::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(to top, rgba(4,8,14,.88) 6%, rgba(4,8,14,.2) 55%, transparent);
+}
+.slide .deco{
+  position:absolute;z-index:1;width:34%;top:7%;right:9%;color:#fff;transform:rotate(-10deg);
+  filter:drop-shadow(0 22px 28px rgba(0,0,0,.4));
+}
+.slide .deco.two{width:20%;top:30%;right:auto;left:10%;transform:rotate(14deg);opacity:.75}
+.slide-copy{
+  position:absolute;z-index:2;left:0;right:0;bottom:0;text-align:center;
+  padding:0 clamp(14px,3vw,34px) clamp(14px,2.4vw,30px);
+}
+.slide-title{
+  font-family:var(--display);font-style:italic;font-weight:800;text-transform:uppercase;
+  font-size:clamp(22px,4.4vw,56px);line-height:.95;text-shadow:0 4px 18px rgba(0,0,0,.5);
+}
+.slide-title span{display:block;color:var(--lime)}
+.slide-cta{
+  display:inline-block;margin-top:clamp(8px,1.4vw,16px);padding:7px 22px;
+  border:2px solid var(--lime);border-radius:999px;background:rgba(0,0,0,.55);
+  font-weight:700;font-size:clamp(11px,1.4vw,16px);
+}
+.slide-cta:hover{background:var(--lime);color:var(--lime-ink)}
+
+.arrow{
+  position:absolute;top:50%;translate:0 -50%;z-index:20;width:46px;height:82px;
+  display:grid;place-items:center;border-radius:14px;color:var(--lime);background:rgba(10,17,28,.78);
+}
+.arrow:hover{background:rgba(10,17,28,.95)}
+.arrow.prev{left:2%}
+.arrow.next{right:2%}
+.arrow .i{width:26px;height:26px;stroke-width:3}
+.dots{display:flex;justify-content:center;gap:8px;margin-top:16px}
+.dot{width:10px;height:10px;border-radius:99px;background:var(--line);transition:width .3s, background .3s}
+.dot[aria-current="true"]{width:30px;background:var(--lime)}
+
+/* =========================================================
+   5. JUDUL SECTION, KARTU "ART" (dipakai ulang)
+   ========================================================= */
+section{margin-top:64px}
+.sec-head{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:22px}
+.sec-title{
+  font-family:var(--display);font-style:italic;font-weight:800;text-transform:uppercase;
+  font-size:clamp(40px,6.5vw,68px);line-height:1;color:var(--lime);
+}
+.sec-title.sm{font-size:clamp(30px,4.4vw,44px);color:var(--text)}
+
+.art{position:relative;overflow:hidden;background:linear-gradient(150deg,var(--c1),var(--c2))}
+.art::before{
+  content:"";position:absolute;inset:0;
+  background:repeating-linear-gradient(115deg, rgba(255,255,255,.08) 0 12px, transparent 12px 34px);
+}
+.art::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 72% 24%, rgba(255,255,255,.38), transparent 55%);
+}
+.art .big{
+  position:absolute;z-index:1;width:66%;aspect-ratio:1;right:-6%;top:14%;color:#fff;
+  transform:rotate(-12deg);filter:drop-shadow(0 14px 22px rgba(0,0,0,.4));
+}
+
+/* =========================================================
+   6. FLASH DEAL
+   ========================================================= */
+.timer{
+  display:inline-flex;align-items:center;gap:10px;padding:8px 20px 8px 10px;border-radius:999px;
+  background:rgba(0,0,0,.4);box-shadow:0 0 0 1px var(--line), 0 0 34px rgba(166,255,61,.12);
+  font-family:var(--display);font-style:italic;font-weight:800;font-size:34px;line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.timer svg{width:38px;height:38px}
+
+.flash-row{
+  display:grid;grid-auto-flow:column;grid-auto-columns:minmax(184px,1fr);gap:16px;
+  overflow-x:auto;padding-bottom:12px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+}
+.fcard{
+  scroll-snap-align:start;text-align:left;overflow:hidden;border-radius:16px;
+  background:var(--panel);border:1px solid var(--line);display:flex;flex-direction:column;
+}
+.fcard:hover{border-color:var(--lime)}
+.fcard .art{aspect-ratio:4/5}
+.gbadge{
+  position:absolute;z-index:3;top:10px;left:10px;width:40px;height:40px;border-radius:50%;
+  display:grid;place-items:center;background:rgba(0,0,0,.45);border:2px solid #fff;color:#fff;
+}
+.gbadge svg{width:20px;height:20px}
+.left{
+  position:absolute;z-index:3;top:0;right:0;padding:6px 12px 6px 28px;
+  background:var(--lime);color:var(--lime-ink);font-family:var(--display);font-weight:800;font-size:15px;
+  clip-path:polygon(16px 0,100% 0,100% 100%,0 100%);
+}
+.old{
+  position:absolute;z-index:3;left:0;bottom:0;padding:8px 30px 6px 10px;
+  background:rgba(8,14,24,.88);color:#d3dcea;font-family:var(--display);font-weight:800;font-size:22px;line-height:1;
+  clip-path:polygon(0 0,calc(100% - 20px) 0,100% 100%,0 100%);
+}
+.old small{font-size:12px;margin-right:3px}
+.old s{text-decoration-thickness:2px}
+.fbody{padding:12px 12px 14px;display:grid;gap:8px}
+.ftitle{font-family:var(--display);font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.02em;line-height:1.15}
+.fprice{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fprice b{font-family:var(--display);font-style:italic;font-weight:800;font-size:27px;color:var(--lime);line-height:1}
+.fprice b small{font-size:15px;margin-right:2px}
+.tag{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;
+  background:var(--hot);color:#fff;font-family:var(--display);font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;
+}
+.tag svg{width:12px;height:12px;fill:currentColor}
+
+/* =========================================================
+   7. KATALOG GAME
+   ========================================================= */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.chip{padding:8px 18px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-weight:600}
+.chip:hover{border-color:var(--lime)}
+.chip[aria-pressed="true"]{background:var(--lime);border-color:var(--lime);color:var(--lime-ink)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:18px}
+.gcard{text-align:left;border-radius:16px;overflow:hidden;background:var(--panel);border:1px solid var(--line)}
+.gcard:hover{border-color:var(--lime)}
+.gcard .art{aspect-ratio:1}
+.gcard .gbody{padding:12px 14px 14px}
+.gcard h3{font-family:var(--display);font-weight:800;font-size:21px;line-height:1.1;text-transform:uppercase}
+.gcard p{font-size:13px;color:var(--muted)}
+.empty{grid-column:1/-1;padding:40px 20px;text-align:center;color:var(--muted);background:var(--panel);border-radius:16px;border:1px dashed var(--line)}
+
+/* cara top up */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;counter-reset:s}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 20px 22px}
+.step::before{
+  counter-increment:s;content:counter(s);display:grid;place-items:center;width:38px;height:38px;border-radius:50%;
+  background:var(--lime);color:var(--lime-ink);font-family:var(--display);font-weight:800;font-size:22px;margin-bottom:12px;
+}
+.step h3{font-family:var(--display);font-size:24px;font-weight:800;text-transform:uppercase}
+.step p{color:var(--muted);font-size:15px}
+
+/* footer */
+footer{margin-top:80px;padding:34px 0 46px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer .wrap{display:flex;gap:24px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+footer p{max-width:62ch}
+
+/* tombol melayang */
+.float{position:fixed;right:20px;bottom:20px;z-index:40;display:grid;gap:10px}
+.fab{width:54px;height:54px;border-radius:14px;display:grid;place-items:center;background:#fff;color:#0a111c;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.fab.top{background:var(--lime);color:var(--lime-ink)}
+.fab.top[hidden]{display:none}
+.fab .i{width:28px;height:28px;stroke-width:2.6}
+
+/* toast */
+.toast{
+  position:fixed;left:50%;bottom:26px;translate:-50% 20px;z-index:100;max-width:min(92vw,460px);
+  background:var(--panel-2);border:1px solid var(--lime);color:var(--text);padding:12px 20px;border-radius:14px;
+  opacity:0;pointer-events:none;transition:opacity .25s, translate .25s;text-align:center;
+}
+.toast.show{opacity:1;translate:-50% 0}
+
+/* =========================================================
+   8. MODAL TOP UP
+   ========================================================= */
+dialog{
+  width:min(720px,94vw);max-height:92vh;padding:0;border:1px solid var(--line);border-radius:22px;
+  background:var(--panel);color:var(--text);overflow:hidden;
+}
+dialog[open]{display:flex;flex-direction:column}
+dialog::backdrop{background:rgba(3,7,14,.74);backdrop-filter:blur(4px)}
+.m-head{display:flex;align-items:center;gap:16px;padding:16px 20px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.m-head .art{width:64px;height:64px;border-radius:14px;flex:none}
+.m-head h2{font-family:var(--display);font-weight:800;font-size:28px;line-height:1;text-transform:uppercase}
+.m-head p{font-size:14px;color:var(--muted)}
+.m-close{margin-left:auto;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--bg)}
+.m-close:hover{color:var(--lime)}
+.m-body{overflow:auto;padding:22px;display:grid;gap:26px}
+.m-step h3{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:800;font-size:22px;text-transform:uppercase;margin-bottom:12px}
+.m-step h3 i{
+  display:grid;place-items:center;width:28px;height:28px;border-radius:50%;
+  background:var(--lime);color:var(--lime-ink);font-style:normal;font-size:17px;
+}
+.fields{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field input{
+  width:100%;height:46px;padding:0 14px;border-radius:12px;background:var(--bg);color:var(--text);
+  border:1px solid var(--line);font:inherit;outline:0;
+}
+.field input:focus{border-color:var(--lime)}
+.packs,.pays{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.pays{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.opt{
+  text-align:left;padding:12px 14px;border-radius:14px;background:var(--bg);border:1.5px solid var(--line);
+  display:grid;gap:2px;position:relative;
+}
+.opt:hover{border-color:var(--muted)}
+.opt[aria-pressed="true"]{border-color:var(--lime);background:rgba(166,255,61,.08)}
+.opt b{font-family:var(--display);font-weight:800;font-size:21px;line-height:1.1}
+.opt span{font-size:14px;color:var(--lime)}
+.opt.pay span{color:var(--muted)}
+.opt .tag{position:absolute;top:-9px;right:10px}
+.err{min-height:22px;color:var(--danger);font-size:14px}
+.m-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:14px 22px;border-top:1px solid var(--line);background:var(--panel-2);
+}
+.total{display:grid;line-height:1.2}
+.total small{color:var(--muted);font-size:13px}
+.total strong{font-family:var(--display);font-style:italic;font-weight:800;font-size:32px;color:var(--lime)}
+.btn{
+  padding:12px 28px;border-radius:999px;background:var(--lime);color:var(--lime-ink);
+  font-family:var(--display);font-weight:800;font-size:21px;letter-spacing:.03em;text-transform:uppercase;
+}
+.btn:hover{filter:brightness(1.08)}
+.done{display:grid;gap:14px;text-align:center;justify-items:center;padding:10px 0}
+.done h3{font-family:var(--display);font-weight:800;font-size:32px;text-transform:uppercase;color:var(--lime)}
+.done dl{display:grid;grid-template-columns:auto 1fr;gap:8px 18px;text-align:left;background:var(--bg);padding:16px 20px;border-radius:14px;border:1px solid var(--line);min-width:min(100%,380px)}
+.done dt{color:var(--muted)}
+.done dd{font-weight:600;text-align:right}
+
+/* =========================================================
+   9. RESPONSIVE DAN ANIMASI
+   ========================================================= */
+@media (max-width:760px){
+  .wrap{width:min(1240px, 100% - 28px)}
+  .site-head{position:static;background:none}
+  .head-row{flex-wrap:wrap;gap:12px}
+  .search{order:3;flex-basis:100%}
+  .nav{flex-wrap:wrap}
+  .nav-links{order:2;flex-basis:100%}
+  .auth{margin-left:auto}
+  .stage{--w:84%;--step:94%;margin-top:20px}
+  .arrow{width:34px;height:60px}
+  .timer{font-size:26px}
+  .timer svg{width:30px;height:30px}
+  .fields{grid-template-columns:1fr}
+  .float{right:12px;bottom:12px}
+  .fab{width:46px;height:46px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none !important;animation:none !important}
+}
+</style>
+</head>
+
+<body>
+
+<!-- Ikon SVG yang dipakai ulang (dipanggil dengan <use href="#i-nama">) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-gem" viewBox="0 0 64 64"><path fill="currentColor" d="M16 8h32l12 16-28 34L4 24z"/><path fill="none" stroke="rgba(0,0,0,.28)" stroke-width="2.5" stroke-linejoin="round" d="M4 24h56M22 8l-6 16 16 34M42 8l6 16-16 34"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 64 64"><circle cx="32" cy="32" r="28" fill="currentColor"/><circle cx="32" cy="32" r="19" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="3"/><path d="M32 20v24M26 26h9a4 4 0 0 1 0 8h-9" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 64 64"><path fill="currentColor" d="M38 3 12 37h16l-4 24 28-36H36z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 64 64"><path fill="currentColor" d="M32 3 7 12v18c0 15 10 26 25 31 15-5 25-16 25-31V12z"/><path d="M32 14v36M18 24h28" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-star" viewBox="0 0 64 64"><path fill="currentColor" d="m32 4 8.5 17.9 19.5 2.4-14.4 13.5 3.7 19.4L32 47.7 14.7 57.2l3.7-19.4L4 24.3l19.5-2.4z"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 64 64"><path fill="currentColor" d="M5 16h54v13a4 4 0 0 0 0 8v13H5V37a4 4 0 0 0 0-8z"/><path d="M22 18v28" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="3" stroke-dasharray="4 4"/></symbol>
+  <symbol id="i-flame" viewBox="0 0 24 24"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-4-1-6 1-10z"/></symbol>
+</svg>
+
+<!-- ================= HEADER ================= -->
+<header class="site-head">
+  <div class="wrap">
+    <div class="head-card">
+      <div class="head-row">
+        <a class="logo" href="#" aria-label="KiosGame, ke beranda">
+          <svg viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M20 2 36 11v18L20 38 4 29V11z" fill="#a6ff3d"/>
+            <path d="M23 8 12 23h7l-2 9 11-15h-7z" fill="#0c1a00"/>
+          </svg>
+          <span>KIOSGAME<small>TOP UP HEMAT</small></span>
+        </a>
+        <label class="search">
+          <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input id="q" type="search" placeholder="Cari game atau voucher di sini..." aria-label="Cari game atau voucher" autocomplete="off">
+        </label>
+      </div>
+
+      <nav class="nav" aria-label="Menu utama">
+        <div class="nav-links">
+          <a class="nl active" href="#"><svg class="i" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8v10H3z"/><path d="M9 21v-7h6v7"/></svg>Home</a>
+          <button class="nl" data-soon><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Riwayat Transaksi</button>
+          <button class="nl" data-soon><svg class="i" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="m3 7 9 4 9-4M12 11v10"/></svg>Cek Pesanan</button>
+          <button class="nl" data-soon><svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>Kalkulator</button>
+          <button class="nl" data-soon><svg class="i" viewBox="0 0 24 24"><path d="M3 4h3l2.5 11h10l2-8H7"/><circle cx="10" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg>Beli Akun</button>
+        </div>
+        <div class="auth">
+          <button class="nl" data-soon><svg class="i" viewBox="0 0 24 24"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>Masuk</button>
+          <button class="nl" data-soon><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Daftar</button>
+        </div>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= HERO CAROUSEL ================= -->
+  <div class="stage" id="stage" role="region" aria-roledescription="carousel" aria-label="Promo terbaru">
+    <button class="arrow prev" id="prev" aria-label="Promo sebelumnya"><svg class="i" viewBox="0 0 24 24"><path d="m15 5-7 7 7 7"/></svg></button>
+    <button class="arrow next" id="next" aria-label="Promo berikutnya"><svg class="i" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></button>
+  </div>
+  <div class="dots" id="dots"></div>
+
+  <!-- ================= FLASH DEAL ================= -->
+  <section aria-labelledby="flash-title">
+    <div class="sec-head">
+      <h2 class="sec-title" id="flash-title">Flash Deal</h2>
+      <div class="timer" role="timer" aria-label="Sisa waktu flash deal">
+        <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" fill="#e11d2e"/><circle cx="20" cy="20" r="13" fill="none" stroke="#fff" stroke-width="3"/><path d="M20 12v8l5 3" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>
+        <span id="timer">0:9:23:51</span>
+      </div>
+    </div>
+    <div class="flash-row" id="flash"></div>
+  </section>
+
+  <!-- ================= KATALOG ================= -->
+  <section id="katalog" aria-labelledby="kat-title">
+    <div class="sec-head"><h2 class="sec-title sm" id="kat-title">Pilih game kamu</h2></div>
+    <div class="tabs" id="tabs">
+      <button class="chip" data-cat="semua" aria-pressed="true">Semua</button>
+      <button class="chip" data-cat="mobile" aria-pressed="false">Game mobile</button>
+      <button class="chip" data-cat="pc" aria-pressed="false">Game PC</button>
+      <button class="chip" data-cat="voucher" aria-pressed="false">Voucher</button>
+    </div>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <!-- ================= CARA TOP UP ================= -->
+  <section aria-labelledby="cara-title">
+    <div class="sec-head"><h2 class="sec-title sm" id="cara-title">Cara top up</h2></div>
+    <div class="steps">
+      <div class="step"><h3>Pilih game</h3><p>Cari game di katalog atau ambil langsung dari Flash Deal.</p></div>
+      <div class="step"><h3>Isi ID dan nominal</h3><p>Masukkan ID akun, pilih nominal, lalu pilih cara bayar.</p></div>
+      <div class="step"><h3>Bayar</h3><p>Setelah pembayaran terkonfirmasi, item masuk ke akunmu.</p></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>KiosGame adalah template latihan HTML, CSS, dan JavaScript. Nama game, harga, dan pembayaran di halaman ini hanya contoh, tidak ada transaksi sungguhan.</p>
+    <p>&copy; 2026 KiosGame (latihan)</p>
+  </div>
+</footer>
+
+<div class="float">
+  <button class="fab top" id="toTop" aria-label="Kembali ke atas" hidden><svg class="i" viewBox="0 0 24 24"><path d="m6 11 6-6 6 6M6 19l6-6 6 6"/></svg></button>
+  <button class="fab" data-soon aria-label="Chat bantuan"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 0 1 16 0v4a2 2 0 0 1-2 2h-2v-6h4M4 12v4a2 2 0 0 0 2 2h2v-6H4"/><path d="M16 20a4 4 0 0 1-4 2"/></svg></button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- ================= MODAL TOP UP ================= -->
+<dialog id="modal" aria-labelledby="mTitle">
+  <div class="m-head" id="mHead"></div>
+  <div class="m-body" id="mBody"></div>
+  <div class="m-foot" id="mFoot"></div>
+</dialog>
+
+<script>
+/* =========================================================
+   DATA — ubah isi bagian ini untuk mengganti game, harga, dan promo
+   ========================================================= */
+
+// packs: [jumlah item, harga rupiah]
+const GAMES = [
+  {id:'arena-legenda', name:'Arena Legenda', pub:'Studio Garuda', cur:'Diamond', cat:'mobile', c1:'#ff5fa2', c2:'#5b2bff', icon:'gem', server:true,
+   packs:[[86,22000],[172,43500],[257,64000],[344,85500],[514,126000],[1050,255000],[2232,538000]]},
+  {id:'api-bebas', name:'Api Bebas', pub:'Nusa Games', cur:'Diamond', cat:'mobile', c1:'#ff8a1f', c2:'#7a1020', icon:'bolt',
+   packs:[[70,10000],[140,20000],[355,50000],[720,100000],[1450,198000],[2180,296000],[5600,730000]]},
+  {id:'kerajaan-kehormatan', name:'Kerajaan Kehormatan', pub:'Lembah Digital', cur:'Token', cat:'mobile', c1:'#2fd4ff', c2:'#1d3bd1', icon:'shield',
+   packs:[[16,3500],[80,16000],[240,48000],[400,79000],[800,158000],[1245,245000]]},
+  {id:'blok-dunia', name:'Blok Dunia', pub:'Kubus Studio', cur:'Koin', cat:'mobile', c1:'#7be04a', c2:'#0e7a5a', icon:'coin',
+   packs:[[400,70000],[800,140000],[1700,280000],[2000,395000],[4500,780000]]},
+  {id:'pemburu-bintang', name:'Pemburu Bintang', pub:'Orbit Interactive', cur:'Kristal', cat:'mobile', c1:'#ffd23f', c2:'#c2410c', icon:'star',
+   packs:[[60,15000],[300,75000],[980,230000],[1980,455000],[3280,750000]]},
+  {id:'taktik-valoria', name:'Taktik Valoria', pub:'Rimba PC', cur:'Poin', cat:'pc', c1:'#ff4d6d', c2:'#240046', icon:'shield',
+   packs:[[475,56000],[1000,115000],[2050,230000],[3650,400000],[5350,580000]]},
+  {id:'dunia-sihir', name:'Dunia Sihir', pub:'Menara Games', cur:'Orb', cat:'mobile', c1:'#b388ff', c2:'#1a237e', icon:'star',
+   packs:[[60,14000],[330,72000],[1090,235000],[2240,470000]]},
+  {id:'balap-neon', name:'Balap Neon', pub:'Jalur Cepat', cur:'Chip', cat:'mobile', c1:'#00f5d4', c2:'#3a0ca3', icon:'bolt',
+   packs:[[100,15000],[550,78000],[1200,165000],[2500,330000]]},
+  {id:'voucher-pc', name:'Voucher Dompet PC', pub:'Toko Digital', cur:'Voucher', cat:'voucher', c1:'#3b82f6', c2:'#0f172a', icon:'ticket', money:true,
+   packs:[[12000,13000],[45000,46500],[90000,92000],[120000,123000],[250000,254000]]},
+  {id:'voucher-aplikasi', name:'Voucher Toko Aplikasi', pub:'Toko Digital', cur:'Voucher', cat:'voucher', c1:'#34d399', c2:'#064e3b', icon:'ticket', money:true,
+   packs:[[10000,11000],[25000,26500],[50000,51500],[100000,102500]]},
+];
+
+const FLASH = [
+  {g:'arena-legenda',       label:'2.232 Diamond (1.908 + 324 bonus)', old:589000, price:498500, left:15},
+  {g:'arena-legenda',       label:'2.578 Diamond (2.211 + 367 bonus)', old:690000, price:589900, left:7},
+  {g:'api-bebas',           label:'5.600 Diamond',                     old:742000, price:668000, left:14},
+  {g:'kerajaan-kehormatan', label:'1.245 Token (1.200 + 45 bonus)',    old:262000, price:229900, left:20},
+  {g:'blok-dunia',          label:'2.000 Koin',                        old:408000, price:364500, left:16},
+  {g:'pemburu-bintang',     label:'1.980 Kristal',                     old:480000, price:419000, left:20},
+];
+
+const SLIDES = [
+  {l1:'Tunggu apa lagi? Buruan top up', l2:'bonus diamond sekarang juga!', cta:'Top up sekarang', c1:'#4b1d8f', c2:'#e0508a', icon:'gem',   icon2:'star', g:'arena-legenda'},
+  {l1:'Event musim baru akhirnya rilis!', l2:'ambil bundelnya hari ini',    cta:'Lihat bundel',    c1:'#0b6b4f', c2:'#1d3bd1', icon:'shield', icon2:'bolt', g:'kerajaan-kehormatan'},
+  {l1:'Voucher game mulai Rp10.000',      l2:'bayar QRIS, langsung masuk',  cta:'Beli voucher',    c1:'#c2410c', c2:'#7a1020', icon:'ticket', icon2:'coin', g:'voucher-aplikasi'},
+];
+
+const PAYS = [
+  {id:'qris',  name:'QRIS',          note:'Semua e-wallet dan m-banking', fee:p => Math.round(p * 0.007)},
+  {id:'va',    name:'Transfer bank', note:'Virtual account',              fee:() => 4000},
+  {id:'ewal',  name:'E-wallet',      note:'Bayar lewat aplikasi',         fee:p => Math.round(p * 0.015)},
+  {id:'store', name:'Minimarket',    note:'Bayar di kasir',               fee:() => 3500},
+];
+
+/* =========================================================
+   FUNGSI BANTU
+   ========================================================= */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const num    = n => n.toLocaleString('id-ID');
+const rupiah = n => 'Rp' + num(n);
+const pad    = n => String(n).padStart(2, '0');
+const gameOf = id => GAMES.find(g => g.id === id);
+const icon   = (name, cls = '') => `<svg class="${cls}" viewBox="0 0 64 64" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+const art    = (g, extra = '') => `<div class="art ${extra}" style="--c1:${g.c1};--c2:${g.c2}">${icon(g.icon, 'big')}</div>`;
+const packLabel = (g, a) => g.money ? `Voucher ${rupiah(a)}` : `${num(a)} ${g.cur}`;
+
+let toastTimer;
+function toast(msg){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+/* =========================================================
+   HERO CAROUSEL
+   ========================================================= */
+const stage = $('#stage');
+const dotsBox = $('#dots');
+let active = 0, autoplay;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+SLIDES.forEach((s, i) => {
+  const el = document.createElement('div');
+  el.className = 'slide';
+  el.setAttribute('role', 'group');
+  el.setAttribute('aria-roledescription', 'slide');
+  el.setAttribute('aria-label', `${i + 1} dari ${SLIDES.length}`);
+  el.style.setProperty('--c1', s.c1);
+  el.style.setProperty('--c2', s.c2);
+  el.innerHTML = `
+    ${icon(s.icon, 'deco')}${icon(s.icon2, 'deco two')}
+    <div class="slide-copy">
+      <h2 class="slide-title">${s.l1}<span>${s.l2}</span></h2>
+      <button class="slide-cta" data-game="${s.g}">${s.cta}</button>
+    </div>`;
+  el.addEventListener('click', e => {
+    if (i !== active) { e.stopPropagation(); go(i); }
+  }, true);
+  stage.insertBefore(el, $('#prev'));
+
+  const dot = document.createElement('button');
+  dot.className = 'dot';
+  dot.setAttribute('aria-label', `Tampilkan promo ${i + 1}`);
+  dot.addEventListener('click', () => go(i));
+  dotsBox.append(dot);
+});
+
+function layoutSlides(){
+  const n = SLIDES.length, half = Math.floor(n / 2);
+  $$('.slide', stage).forEach((el, i) => {
+    const d = ((i - active + n + half) % n) - half;   // -1, 0, 1 ...
+    const abs = Math.abs(d);
+    el.style.setProperty('--d', d);
+    el.style.setProperty('--abs', Math.min(abs, 2));
+    el.style.zIndex = 10 - abs;
+    el.classList.toggle('is-hidden', abs > 1);
+    el.setAttribute('aria-hidden', abs !== 0);
+    $('.slide-cta', el).tabIndex = abs === 0 ? 0 : -1;
+  });
+  $$('.dot').forEach((d, i) => d.setAttribute('aria-current', i === active));
+}
+function go(i){
+  active = (i + SLIDES.length) % SLIDES.length;
+  layoutSlides();
+}
+function startAuto(){
+  if (reduceMotion) return;
+  stopAuto();
+  autoplay = setInterval(() => go(active + 1), 5500);
+}
+function stopAuto(){ clearInterval(autoplay); }
+
+$('#prev').addEventListener('click', () => go(active - 1));
+$('#next').addEventListener('click', () => go(active + 1));
+stage.addEventListener('mouseenter', stopAuto);
+stage.addEventListener('mouseleave', startAuto);
+stage.addEventListener('focusin', stopAuto);
+stage.addEventListener('focusout', startAuto);
+layoutSlides();
+startAuto();
+
+/* =========================================================
+   FLASH DEAL
+   ========================================================= */
+$('#flash').innerHTML = FLASH.map((f, i) => {
+  const g = gameOf(f.g);
+  return `
+  <button class="fcard" data-flash="${i}" aria-label="${g.name}, ${f.label}, ${rupiah(f.price)}">
+    ${art(g)
+      .replace('</div>', `
+        <span class="gbadge">${icon(g.icon)}</span>
+        <span class="left">TERSISA : ${f.left}</span>
+        <span class="old"><small>Rp</small><s>${num(f.old)}</s></span>
+      </div>`)}
+    <div class="fbody">
+      <div class="ftitle">${f.label}</div>
+      <div class="fprice">
+        <b><small>Rp</small>${num(f.price)}</b>
+        <span class="tag"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-flame"/></svg>Flash deal</span>
+      </div>
+    </div>
+  </button>`;
+}).join('');
+
+// hitung mundur: mulai dari 9 jam 23 menit 51 detik, lalu mengulang
+let endAt = Date.now() + ((9 * 60 + 23) * 60 + 51) * 1000;
+function tick(){
+  let ms = endAt - Date.now();
+  if (ms <= 0) { endAt += 24 * 3600 * 1000; ms = endAt - Date.now(); }
+  const s = Math.floor(ms / 1000);
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600),
+        m = Math.floor(s % 3600 / 60), sec = s % 60;
+  $('#timer').textContent = `${d}:${h}:${pad(m)}:${pad(sec)}`;
+}
+tick();
+setInterval(tick, 1000);
+
+/* =========================================================
+   KATALOG + PENCARIAN
+   ========================================================= */
+let cat = 'semua', query = '';
+function renderCatalog(){
+  const list = GAMES.filter(g => (cat === 'semua' || g.cat === cat) && g.name.toLowerCase().includes(query));
+  $('#grid').innerHTML = list.length
+    ? list.map(g => `
+      <button class="gcard" data-game="${g.id}">
+        ${art(g)}
+        <div class="gbody"><h3>${g.name}</h3><p>${g.pub}</p></div>
+      </button>`).join('')
+    : `<p class="empty">Game "${query.replace(/[<>&"]/g, '')}" belum ada. Coba kata lain atau pilih kategori Semua.</p>`;
+}
+$('#tabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-cat]');
+  if (!b) return;
+  cat = b.dataset.cat;
+  $$('#tabs .chip').forEach(c => c.setAttribute('aria-pressed', c === b));
+  renderCatalog();
+});
+$('#q').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); renderCatalog(); });
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') $('#katalog').scrollIntoView(); });
+renderCatalog();
+
+/* =========================================================
+   MODAL TOP UP
+   ========================================================= */
+const modal = $('#modal');
+let S = {};   // state: game, daftar paket, paket terpilih, pembayaran terpilih
+
+function openTopup(gameId, flash){
+  const g = gameOf(gameId);
+  const packs = g.packs.map(([a, p]) => ({label: packLabel(g, a), price: p}));
+  if (flash) packs.unshift({label: flash.label, price: flash.price, flash: true});
+  S = {g, packs, pack: flash ? packs[0] : null, pay: null};
+
+  $('#mHead').innerHTML = `
+    ${art(g)}
+    <div><h2 id="mTitle">${g.name}</h2><p>${g.pub}</p></div>
+    <button class="m-close" id="mClose" aria-label="Tutup"><svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button>`;
+
+  $('#mBody').innerHTML = `
+    <div class="m-step">
+      <h3><i>1</i>Masukkan ID akun</h3>
+      <div class="fields">
+        <div class="field"><label for="uid">User ID</label><input id="uid" inputmode="numeric" placeholder="Contoh: 12345678" autocomplete="off"></div>
+        ${g.server ? `<div class="field"><label for="sid">Server</label><input id="sid" inputmode="numeric" placeholder="Contoh: 2001" autocomplete="off"></div>` : ''}
+      </div>
+    </div>
+    <div class="m-step">
+      <h3><i>2</i>Pilih nominal</h3>
+      <div class="packs">
+        ${packs.map((p, i) => `
+          <button class="opt" data-pack="${i}" aria-pressed="${S.pack === p}">
+            ${p.flash ? `<em class="tag" style="font-style:normal">Flash deal</em>` : ''}
+            <b>${p.label}</b><span>${rupiah(p.price)}</span>
+          </button>`).join('')}
+      </div>
+    </div>
+    <div class="m-step">
+      <h3><i>3</i>Pilih pembayaran</h3>
+      <div class="pays">
+        ${PAYS.map((p, i) => `
+          <button class="opt pay" data-pay="${i}" aria-pressed="false"><b>${p.name}</b><span>${p.note}</span></button>`).join('')}
+      </div>
+    </div>
+    <p class="err" id="err" role="alert"></p>`;
+
+  updateFoot();
+  modal.showModal();
+}
+
+function updateFoot(){
+  const {pack, pay} = S;
+  const fee = pack && pay ? pay.fee(pack.price) : 0;
+  $('#mFoot').innerHTML = `
+    <div class="total">
+      <small>${pack && pay ? `Nominal ${rupiah(pack.price)} + biaya ${rupiah(fee)}` : 'Pilih nominal dan pembayaran'}</small>
+      <strong>${pack ? rupiah(pack.price + fee) : 'Rp0'}</strong>
+    </div>
+    <button class="btn" id="payBtn">Bayar sekarang</button>`;
+}
+
+function showError(msg, focusId){
+  $('#err').textContent = msg;
+  if (focusId) $('#' + focusId)?.focus();
+}
+
+function submitOrder(){
+  const {g, pack, pay} = S;
+  const uid = $('#uid').value.trim();
+  const sid = g.server ? $('#sid').value.trim() : '';
+
+  if (!/^\d{5,14}$/.test(uid))                  return showError('User ID harus berisi 5 sampai 14 angka.', 'uid');
+  if (g.server && !/^\d{3,6}$/.test(sid))       return showError('Server harus berisi 3 sampai 6 angka.', 'sid');
+  if (!pack)                                    return showError('Pilih nominal top up dulu.');
+  if (!pay)                                     return showError('Pilih metode pembayaran dulu.');
+
+  const fee = pay.fee(pack.price);
+  const code = 'KG-' + Math.random().toString(36).slice(2, 8).toUpperCase();
+  $('#mBody').innerHTML = `
+    <div class="done">
+      <h3>Pesanan demo dibuat</h3>
+      <p class="muted">Ini hanya latihan, tidak ada pembayaran yang diproses.</p>
+      <dl>
+        <dt>Kode pesanan</dt><dd>${code}</dd>
+        <dt>Game</dt><dd>${g.name}</dd>
+        <dt>ID akun</dt><dd>${uid}${g.server ? ` (${sid})` : ''}</dd>
+        <dt>Item</dt><dd>${pack.label}</dd>
+        <dt>Pembayaran</dt><dd>${pay.name}</dd>
+        <dt>Total</dt><dd>${rupiah(pack.price + fee)}</dd>
+      </dl>
+    </div>`;
+  $('#mFoot').innerHTML = `<span class="muted">Terima kasih sudah mencoba!</span><button class="btn" id="mDone">Tutup</button>`;
+}
+
+modal.addEventListener('click', e => {
+  if (e.target === modal) return modal.close();                 // klik area gelap
+  if (e.target.closest('#mClose, #mDone')) return modal.close();
+  if (e.target.closest('#payBtn')) return submitOrder();
+
+  const p = e.target.closest('[data-pack]');
+  if (p) {
+    S.pack = S.packs[p.dataset.pack];
+    $$('[data-pack]', modal).forEach(b => b.setAttribute('aria-pressed', b === p));
+    $('#err').textContent = '';
+    updateFoot();
+  }
+  const y = e.target.closest('[data-pay]');
+  if (y) {
+    S.pay = PAYS[y.dataset.pay];
+    $$('[data-pay]', modal).forEach(b => b.setAttribute('aria-pressed', b === y));
+    $('#err').textContent = '';
+    updateFoot();
+  }
+});
+
+/* =========================================================
+   KLIK GLOBAL: buka modal, menu yang belum dibuat, scroll
+   ========================================================= */
+document.addEventListener('click', e => {
+  const fl = e.target.closest('[data-flash]');
+  if (fl) { const f = FLASH[fl.dataset.flash]; return openTopup(f.g, f); }
+
+  const gm = e.target.closest('[data-game]');
+  if (gm) return openTopup(gm.dataset.game);
+
+  if (e.target.closest('[data-soon]')) toast('Halaman ini belum dibuat. Bisa jadi latihanmu berikutnya!');
+});
+
+const toTop = $('#toTop');
+addEventListener('scroll', () => { toTop.hidden = scrollY < 500; }, {passive:true});
+toTop.addEventListener('click', () => scrollTo({top:0}));
+</script>
+</body>
+</html>
